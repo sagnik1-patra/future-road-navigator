@@ -1,40 +1,26 @@
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { HelpCircle, BookOpen, User, Compass } from "lucide-react";
+import { HelpCircle, User, Compass } from "lucide-react";
 import HelpDesk from "@/components/dashboard/HelpDesk";
 import CareerGuidance from "@/components/dashboard/CareerGuidance";
 import UserProfile from "@/components/dashboard/UserProfile";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Dashboard = () => {
-  const [user, setUser] = useState<{ name: string; email: string } | null>(null);
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   useEffect(() => {
     // Check if user is logged in
-    const userData = localStorage.getItem("user");
-    if (!userData) {
-      navigate("/signin");
-      return;
-    }
-    
-    try {
-      setUser(JSON.parse(userData));
-    } catch (error) {
-      console.error("Error parsing user data:", error);
+    if (!user) {
       navigate("/signin");
     }
-  }, [navigate]);
-
-  const handleSignOut = () => {
-    localStorage.removeItem("user");
-    navigate("/signin");
-  };
+  }, [user, navigate]);
 
   if (!user) {
     return null; // Will redirect in useEffect
@@ -51,7 +37,7 @@ const Dashboard = () => {
               Let's explore your career possibilities today
             </p>
           </div>
-          <Button variant="outline" onClick={handleSignOut}>
+          <Button variant="outline" onClick={signOut}>
             Sign Out
           </Button>
         </div>

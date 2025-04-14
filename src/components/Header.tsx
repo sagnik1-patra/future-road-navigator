@@ -1,6 +1,6 @@
 
-import { useEffect, useState } from "react";
-import { GraduationCap, Menu, X } from "lucide-react";
+import { useState } from "react";
+import { GraduationCap, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -10,16 +10,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Header = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    // Check if user is logged in
-    const user = localStorage.getItem("user");
-    setIsLoggedIn(!!user);
-  }, [location]); // Re-check when location changes
+  const { user, signOut } = useAuth();
 
   return (
     <header className="border-b bg-white shadow-sm py-4">
@@ -43,12 +38,19 @@ const Header = () => {
             About
           </Link>
           
-          {isLoggedIn ? (
-            <Link to="/dashboard">
-              <Button variant="default" className="bg-career-gradient">
+          {user ? (
+            <>
+              <Link to="/dashboard" className="text-gray-700 hover:text-career-purple transition-colors">
                 Dashboard
+              </Link>
+              <Button 
+                variant="outline" 
+                onClick={signOut}
+                className="text-gray-700 hover:text-career-purple transition-colors"
+              >
+                Sign Out
               </Button>
-            </Link>
+            </>
           ) : (
             <>
               <Link to="/signin" className="text-gray-700 hover:text-career-purple transition-colors">
@@ -87,12 +89,19 @@ const Header = () => {
                 About
               </Link>
               
-              {isLoggedIn ? (
-                <Link to="/dashboard">
-                  <Button variant="default" className="w-full bg-career-gradient">
+              {user ? (
+                <>
+                  <Link to="/dashboard" className="text-gray-700 hover:text-career-purple transition-colors">
                     Dashboard
+                  </Link>
+                  <Button 
+                    variant="outline" 
+                    onClick={signOut}
+                    className="text-gray-700 hover:text-career-purple transition-colors"
+                  >
+                    Sign Out
                   </Button>
-                </Link>
+                </>
               ) : (
                 <>
                   <Link to="/signin" className="text-gray-700 hover:text-career-purple transition-colors">
