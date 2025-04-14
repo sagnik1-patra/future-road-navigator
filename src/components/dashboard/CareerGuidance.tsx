@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowRight, Sparkles, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { fetchCareerRoadmap } from "@/lib/api";
+import { useNavigate } from "react-router-dom";
 
 type UserType = {
   name: string;
@@ -32,8 +34,10 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [currentAnswer, setCurrentAnswer] = useState("");
   const [isAssessing, setIsAssessing] = useState(false);
-  const [suggestions, setSuggestions] = useState<CareerSuggestion[] | null>(null);
+  const [suggestion, setSuggestion] = useState<CareerSuggestion | null>(null);
+  const [roadmapGenerated, setRoadmapGenerated] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const questions: Question[] = [
     {
@@ -86,12 +90,12 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // All questions answered, generate suggestions
-      generateSuggestions(updatedAnswers);
+      // All questions answered, generate suggestion
+      generateSuggestion(updatedAnswers);
     }
   };
 
-  const generateSuggestions = async (answerData: Record<string, string>) => {
+  const generateSuggestion = async (answerData: Record<string, string>) => {
     setIsAssessing(true);
     
     try {
@@ -99,15 +103,15 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
       // For now, we'll simulate a response after a delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Generate dynamic career suggestions based on answers
-      const generatedSuggestions = generateDynamicSuggestions(answerData);
+      // Generate a dynamic career suggestion based on answers
+      const generatedSuggestion = generateDynamicSuggestion(answerData);
       
-      setSuggestions(generatedSuggestions);
+      setSuggestion(generatedSuggestion);
     } catch (error) {
-      console.error("Error generating suggestions:", error);
+      console.error("Error generating suggestion:", error);
       toast({
         title: "Error",
-        description: "Failed to generate career suggestions. Please try again.",
+        description: "Failed to generate career suggestion. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -115,11 +119,8 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
     }
   };
 
-  // Generate dynamic career suggestions based on user answers
-  const generateDynamicSuggestions = (answerData: Record<string, string>): CareerSuggestion[] => {
-    const suggestions: CareerSuggestion[] = [];
-    
-    // Extract key information from answers
+  // Generate a dynamic career suggestion based on user answers
+  const generateDynamicSuggestion = (answerData: Record<string, string>): CareerSuggestion => {
     const subject = answerData.strongest_subject.toLowerCase();
     const hobbies = answerData.free_time.toLowerCase();
     const programmingSkills = answerData.programming.toLowerCase();
@@ -274,18 +275,15 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
       careerAreas.set("Software Engineering", (careerAreas.get("Software Engineering") || 0) + 10);
     }
     
-    // Sort career areas by score and take the top 5
+    // Sort career areas by score and take the top one
     const sortedCareers = Array.from(careerAreas.entries())
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+      .sort((a, b) => b[1] - a[1]);
     
-    // Generate detailed suggestions for top careers
-    sortedCareers.forEach(([career, score]) => {
-      const suggestion = getCareerDetails(career, Math.min(Math.round(score), 100));
-      suggestions.push(suggestion);
-    });
+    // Get the top career with highest match
+    const [topCareer, score] = sortedCareers[0] || ["Software Engineering", 50];
     
-    return suggestions;
+    // Generate detailed suggestion for top career
+    return getCareerDetails(topCareer, Math.min(Math.round(score), 100));
   };
   
   // Get detailed information for a specific career
@@ -511,11 +509,41 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
     return careerDetails[career];
   };
 
+  const handleViewRoadmap = async () => {
+    if (!suggestion) return;
+    
+    setIsAssessing(true);
+    try {
+      // Get a detailed roadmap for the selected career
+      const roadmapData = await fetchCareerRoadmap(suggestion.title);
+      
+      if (roadmapData) {
+        toast({
+          title: "Roadmap Generated",
+          description: `Career roadmap for ${roadmapData.career} is ready!`,
+        });
+        setRoadmapGenerated(true);
+        // Navigate to home page with career query parameter
+        navigate(`/?career=${encodeURIComponent(suggestion.title)}`);
+      }
+    } catch (error) {
+      console.error("Error generating roadmap:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate roadmap. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAssessing(false);
+    }
+  };
+
   const handleRestart = () => {
     setCurrentQuestionIndex(0);
     setAnswers({});
     setCurrentAnswer("");
-    setSuggestions(null);
+    setSuggestion(null);
+    setRoadmapGenerated(false);
   };
 
   const currentQuestion = questions[currentQuestionIndex];
@@ -529,7 +557,7 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
         </p>
       </div>
 
-      {!suggestions ? (
+      {!suggestion ? (
         <Card className="border-career-purple/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -586,7 +614,7 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
                 {currentQuestionIndex < questions.length - 1 ? (
                   <>Next <ArrowRight className="ml-2 h-4 w-4" /></>
                 ) : (
-                  <>Get Suggestions <Sparkles className="ml-2 h-4 w-4" /></>
+                  <>Get Suggestion <Sparkles className="ml-2 h-4 w-4" /></>
                 )}
               </Button>
             </div>
@@ -601,67 +629,70 @@ const CareerGuidance = ({ user }: { user: UserType }) => {
               </span>
             </div>
             <p className="mt-4 text-center text-muted-foreground">
-              Analyzing your responses and generating personalized career suggestions...
+              {roadmapGenerated ? "Generating your detailed career roadmap..." : "Analyzing your responses and generating your ideal career match..."}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h3 className="text-xl font-bold">Your Career Suggestions</h3>
+            <h3 className="text-xl font-bold">Your Perfect Career Match</h3>
             <Button variant="outline" onClick={handleRestart}>
               Start Over
             </Button>
           </div>
           
-          <div className="space-y-4">
-            {suggestions.map((suggestion, index) => (
-              <Card key={index} className="overflow-hidden">
-                <div className="bg-gradient-to-r from-career-purple to-career-blue h-1" />
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <CardTitle>{suggestion.title}</CardTitle>
-                      <CardDescription>{suggestion.description}</CardDescription>
-                    </div>
-                    <div className="bg-career-gradient text-white px-2 py-1 rounded-md text-sm font-medium">
-                      {suggestion.match}% Match
-                    </div>
+          <Card className="overflow-hidden">
+            <div className="bg-gradient-to-r from-career-purple to-career-blue h-2" />
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-2xl">{suggestion.title}</CardTitle>
+                  <CardDescription className="text-base mt-1">{suggestion.description}</CardDescription>
+                </div>
+                <div className="bg-career-gradient text-white px-3 py-1.5 rounded-md text-sm font-medium">
+                  {suggestion.match}% Match
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="font-medium text-lg mb-3">Key Skills</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {suggestion.skills.map((skill, i) => (
+                      <span key={i} className="bg-muted px-3 py-1.5 rounded-md text-sm">
+                        {skill}
+                      </span>
+                    ))}
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Key Skills</h4>
-                      <div className="flex flex-wrap gap-2">
-                        {suggestion.skills.map((skill, i) => (
-                          <span key={i} className="bg-muted px-2 py-1 rounded-md text-sm">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-medium mb-2">Education Pathways</h4>
-                      <ul className="space-y-1">
-                        {suggestion.education.map((edu, i) => (
-                          <li key={i} className="flex items-center gap-1 text-sm">
-                            <ChevronRight className="h-4 w-4 text-career-purple" />
-                            {edu}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    
-                    <Button className="w-full mt-4 bg-career-gradient">
-                      View Career Roadmap
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                </div>
+                
+                <div>
+                  <h4 className="font-medium text-lg mb-3">Education Pathways</h4>
+                  <ul className="space-y-2">
+                    {suggestion.education.map((edu, i) => (
+                      <li key={i} className="flex items-center gap-2 text-sm">
+                        <ChevronRight className="h-5 w-5 text-career-purple" />
+                        <span>{edu}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                
+                <div className="pt-4">
+                  <Button 
+                    className="w-full bg-career-gradient text-base py-6"
+                    onClick={handleViewRoadmap}
+                    disabled={isAssessing}
+                  >
+                    View Detailed Career Roadmap
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

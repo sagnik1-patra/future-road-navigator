@@ -1,5 +1,4 @@
-
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "@/hooks/use-toast";
 
 // Career data types
 export interface CareerStep {
@@ -19,7 +18,7 @@ export interface CareerRoadmap {
   steps: CareerStep[];
 }
 
-// Mock API for career roadmaps - this would be replaced with a real API call
+// Enhanced API for career roadmaps
 export const fetchCareerRoadmap = async (career: string): Promise<CareerRoadmap | null> => {
   try {
     // Simulate API call delay
@@ -39,8 +38,8 @@ export const fetchCareerRoadmap = async (career: string): Promise<CareerRoadmap 
       return roadmap;
     }
     
-    // If no predefined roadmap, generate a generic one based on the career
-    return generateGenericRoadmap(career);
+    // If no predefined roadmap, generate a dynamic one based on the career
+    return generateDynamicRoadmap(career);
   } catch (error) {
     console.error("Error fetching career roadmap:", error);
     toast({
@@ -52,79 +51,293 @@ export const fetchCareerRoadmap = async (career: string): Promise<CareerRoadmap 
   }
 };
 
-// Generate a generic roadmap if we don't have specific data
-const generateGenericRoadmap = (career: string): CareerRoadmap => {
+// Generate a detailed dynamic roadmap for any career
+const generateDynamicRoadmap = (career: string): CareerRoadmap => {
+  // Generate a more detailed and specific description based on career
+  const careerDescription = generateCareerDescription(career);
+  const salary = generateSalaryEstimate(career);
+  const outlook = generateJobOutlook(career);
+  
+  // Generate specific steps for the career path
+  const steps = generateCareerSteps(career);
+  
   return {
     career,
-    description: `A career in ${career} can be rewarding and challenging. It typically requires a combination of education, skills development, and practical experience.`,
-    averageSalary: "Varies by location and experience",
-    jobOutlook: "Research current job market trends",
-    steps: [
-      {
-        id: 1,
-        title: "Foundation Education",
-        description: `Get relevant education for ${career}`,
-        duration: "2-4 years",
-        type: "education",
-        details: [
-          "Research degree requirements specific to this field",
-          "Consider specialized courses or certifications",
-          "Look for accredited programs with good placement rates"
-        ]
-      },
-      {
-        id: 2,
-        title: "Essential Skills",
-        description: "Develop core competencies",
-        duration: "Ongoing",
-        type: "skill",
-        details: [
-          "Technical skills specific to the role",
-          "Soft skills like communication and teamwork",
-          "Problem-solving and critical thinking"
-        ]
-      },
-      {
-        id: 3,
-        title: "Entry-Level Position",
-        description: "Gain practical experience",
-        duration: "1-2 years",
-        type: "experience",
-        details: [
-          "Apply for internships or junior positions",
-          "Build a professional network",
-          "Develop a portfolio of work"
-        ]
-      },
-      {
-        id: 4,
-        title: "Professional Certification",
-        description: "Validate your expertise",
-        duration: "3-6 months",
-        type: "certification",
-        details: [
-          "Research industry-recognized certifications",
-          "Prepare for and complete certification exams",
-          "Keep certifications current with continuing education"
-        ]
-      },
-      {
-        id: 5,
-        title: "Career Growth",
-        description: "Advance to more senior roles",
-        duration: "2-5 years",
-        type: "experience",
-        details: [
-          "Take on more responsibility",
-          "Mentor junior colleagues",
-          "Specialize in a particular area"
-        ]
-      }
-    ]
+    description: careerDescription,
+    averageSalary: salary,
+    jobOutlook: outlook,
+    steps: steps
   };
 };
 
-// Mock data for specific careers
+// Helper function to generate a career description
+const generateCareerDescription = (career: string): string => {
+  const descriptions = [
+    `A career as a ${career} involves applying specialized knowledge and skills to solve complex problems in the field.`,
+    `${career} professionals are in demand for their expertise in analyzing, designing, and implementing solutions.`,
+    `Working as a ${career} allows you to make an impact through innovation and strategic thinking.`,
+    `${career} specialists collaborate with various stakeholders to achieve organizational goals and drive success.`
+  ];
+  
+  // Combine multiple description snippets for a more comprehensive description
+  const baseDescription = descriptions[Math.floor(Math.random() * descriptions.length)];
+  const additionalContext = `Professionals in this field typically need a combination of technical knowledge, analytical skills, and industry understanding. The ${career} role continues to evolve with changing technologies and market demands.`;
+  
+  return `${baseDescription} ${additionalContext}`;
+};
+
+// Helper function to generate salary estimate
+const generateSalaryEstimate = (career: string): string => {
+  // Base salary range depending on the perceived value of the career
+  let baseLow = 50000;
+  let baseHigh = 90000;
+  
+  // Adjust salary based on career keywords
+  const careerLower = career.toLowerCase();
+  
+  if (careerLower.includes("engineer") || 
+      careerLower.includes("developer") || 
+      careerLower.includes("architect") ||
+      careerLower.includes("data") ||
+      careerLower.includes("analyst")) {
+    baseLow = 70000;
+    baseHigh = 120000;
+  }
+  
+  if (careerLower.includes("senior") || 
+      careerLower.includes("lead") || 
+      careerLower.includes("manager") ||
+      careerLower.includes("director")) {
+    baseLow = 90000;
+    baseHigh = 160000;
+  }
+  
+  if (careerLower.includes("medical") || 
+      careerLower.includes("doctor") || 
+      careerLower.includes("health")) {
+    baseLow = 150000;
+    baseHigh = 300000;
+  }
+  
+  // Format the salary range
+  return `$${baseLow.toLocaleString()} - $${baseHigh.toLocaleString()}`;
+};
+
+// Helper function to generate job outlook
+const generateJobOutlook = (career: string): string => {
+  const outlooks = [
+    "Growing faster than average",
+    "Very positive growth outlook",
+    "Steady demand expected",
+    "High demand in certain regions",
+    "Growth potential with specialized skills"
+  ];
+  
+  return outlooks[Math.floor(Math.random() * outlooks.length)];
+};
+
+// Helper function to generate career steps
+const generateCareerSteps = (career: string): CareerStep[] => {
+  const careerLower = career.toLowerCase();
+  const steps: CareerStep[] = [];
+  
+  // Step 1: Education (always first)
+  let educationTitle = "Foundation Education";
+  let educationDesc = `Get relevant education for ${career}`;
+  let educationDuration = "2-4 years";
+  let educationDetails = [
+    "Research degree requirements specific to this field",
+    "Consider specialized courses or certifications",
+    "Look for accredited programs with good placement rates"
+  ];
+  
+  // Customize education based on career
+  if (careerLower.includes("engineer") || careerLower.includes("developer")) {
+    educationTitle = "Technical Degree";
+    educationDesc = "Bachelor's degree in relevant engineering or computer science field";
+    educationDetails = [
+      "Focus on fundamental technical principles",
+      "Take specialized courses in your area of interest",
+      "Complete practical projects to build your portfolio"
+    ];
+  } else if (careerLower.includes("design") || careerLower.includes("creative")) {
+    educationTitle = "Design Education";
+    educationDesc = "Degree in design, arts, or related creative field";
+    educationDetails = [
+      "Build a strong foundation in design principles",
+      "Develop technical skills with industry tools",
+      "Create a portfolio showcasing your best work"
+    ];
+  } else if (careerLower.includes("medical") || careerLower.includes("doctor") || careerLower.includes("health")) {
+    educationTitle = "Medical Education";
+    educationDesc = "Medical degree and specialized training";
+    educationDuration = "6-10 years";
+    educationDetails = [
+      "Complete undergraduate pre-med requirements",
+      "Attend medical school for specialized training",
+      "Complete residency in your chosen specialty"
+    ];
+  }
+  
+  steps.push({
+    id: 1,
+    title: educationTitle,
+    description: educationDesc,
+    duration: educationDuration,
+    type: "education",
+    details: educationDetails
+  });
+  
+  // Step 2: Essential Skills
+  let skillsDetails = [
+    "Technical skills specific to the role",
+    "Soft skills like communication and teamwork",
+    "Problem-solving and critical thinking"
+  ];
+  
+  // Customize skills based on career
+  if (careerLower.includes("engineer") || careerLower.includes("developer")) {
+    skillsDetails = [
+      "Programming languages relevant to your specialization",
+      "System design and architecture principles",
+      "Version control and collaboration tools",
+      "Testing and debugging methodologies"
+    ];
+  } else if (careerLower.includes("design") || careerLower.includes("creative")) {
+    skillsDetails = [
+      "Industry standard design software",
+      "User experience principles",
+      "Visual communication techniques",
+      "Creative problem solving"
+    ];
+  } else if (careerLower.includes("medical") || careerLower.includes("doctor")) {
+    skillsDetails = [
+      "Clinical diagnosis and treatment planning",
+      "Patient communication and care",
+      "Medical record management",
+      "Staying current with medical research"
+    ];
+  } else if (careerLower.includes("manage") || careerLower.includes("leader")) {
+    skillsDetails = [
+      "Team leadership and delegation",
+      "Strategic planning and execution",
+      "Performance management and feedback",
+      "Budget and resource allocation"
+    ];
+  }
+  
+  steps.push({
+    id: 2,
+    title: "Essential Skills",
+    description: `Develop core competencies for ${career}`,
+    duration: "Ongoing",
+    type: "skill",
+    details: skillsDetails
+  });
+  
+  // Step 3: Entry Position
+  steps.push({
+    id: 3,
+    title: "Entry-Level Position",
+    description: `Begin your ${career} journey`,
+    duration: "1-2 years",
+    type: "experience",
+    details: [
+      "Apply theoretical knowledge in practical settings",
+      "Learn from experienced professionals",
+      "Build your professional network",
+      "Identify areas for specialization"
+    ]
+  });
+  
+  // Step 4: Certification (if relevant)
+  if (!careerLower.includes("artist") && !careerLower.includes("writer")) {
+    let certDetails = [
+      "Research industry-recognized certifications",
+      "Prepare for and complete certification exams",
+      "Keep certifications current with continuing education"
+    ];
+    
+    // Customize certification based on career
+    if (careerLower.includes("engineer") || careerLower.includes("developer")) {
+      certDetails = [
+        "Obtain technical certifications in your specialty",
+        "Consider cloud platform certifications (AWS, Azure, etc.)",
+        "Pursue project management certifications as you advance"
+      ];
+    } else if (careerLower.includes("finance") || careerLower.includes("account")) {
+      certDetails = [
+        "Pursue CPA, CFA, or other relevant financial certifications",
+        "Complete continuing education requirements",
+        "Specialize in high-demand areas like risk management"
+      ];
+    } else if (careerLower.includes("medical") || careerLower.includes("doctor")) {
+      certDetails = [
+        "Obtain board certification in your specialty",
+        "Complete continuing medical education",
+        "Consider subspecialty certifications"
+      ];
+    }
+    
+    steps.push({
+      id: 4,
+      title: "Professional Certification",
+      description: "Validate your expertise",
+      duration: "3-12 months",
+      type: "certification",
+      details: certDetails
+    });
+  }
+  
+  // Step 5: Mid-Level Position
+  steps.push({
+    id: steps.length + 1,
+    title: "Mid-Level Position",
+    description: "Take on more responsibility",
+    duration: "2-3 years",
+    type: "experience",
+    details: [
+      "Lead small projects or components",
+      "Mentor junior team members",
+      "Deepen your technical expertise",
+      "Develop leadership and communication skills"
+    ]
+  });
+  
+  // Step 6: Specialization/Advanced Skills
+  steps.push({
+    id: steps.length + 1,
+    title: "Specialized Expertise",
+    description: "Develop mastery in specific areas",
+    duration: "Ongoing",
+    type: "skill",
+    details: [
+      "Identify and focus on high-value specializations",
+      "Stay current with industry developments",
+      "Attend advanced training and conferences",
+      "Contribute to industry knowledge through articles or speaking"
+    ]
+  });
+  
+  // Step 7: Senior Position
+  steps.push({
+    id: steps.length + 1,
+    title: "Senior Position",
+    description: "Take on leadership and strategic roles",
+    duration: "3-5+ years",
+    type: "experience",
+    details: [
+      "Lead major initiatives and teams",
+      "Contribute to organizational strategy",
+      "Develop business and domain expertise",
+      "Build your reputation as an industry authority"
+    ]
+  });
+  
+  return steps;
+};
+
+// Mock data for specific careers (keeping the existing data)
 const mockRoadmaps: CareerRoadmap[] = [
   {
     career: "Software Engineer",
@@ -301,7 +514,7 @@ const mockRoadmaps: CareerRoadmap[] = [
       },
       {
         id: 6,
-        title: "Specialized UX Skills",
+ title: "Specialized UX Skills",
         description: "Develop expertise in specific areas",
         duration: "Ongoing",
         type: "skill",
